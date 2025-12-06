@@ -1,12 +1,13 @@
-Product Proposal: UniLingo Mobile Language Exchange
+Product Proposal: UniLingo Language Exchange Platform
 
 1. Purpose and Problem Statement
-UniLingo is a mobile-first language exchange platform that connects international students and local mentors for structured cultural conversations. The current React application already implements protected authentication flows, nuanced profile onboarding, AI-friendly matching logic, and in-app chat backed by a REST + WebSocket API. This proposal documents the product so stakeholders understand what the shipped code delivers today and which guarantees the experience must keep as the service scales.
+UniLingo is a cross-platform language exchange platform that connects international students and local mentors for structured cultural conversations. The current React application already implements protected authentication flows, nuanced profile onboarding, AI-friendly matching logic, and in-app chat backed by a REST + WebSocket API. The platform supports both mobile and desktop browsers with responsive layouts optimized for each device type. This proposal documents the product so stakeholders understand what the shipped code delivers today and which guarantees the experience must keep as the service scales.
 
 2. Target Users and Primary Scenarios
 - University students studying abroad who need safe, fast matching with peers that can teach or learn complementary languages.
 - Campus language program coordinators who monitor requests via the admin matching panel.
-- Users on mobile browsers (iOS/Android) who expect a native-feeling bottom navigation, live notifications, and localized UI text. Desktop visitors are redirected to a “PC not supported” screen implemented by `MobileOnlyGuard`.
+- Users on mobile browsers (iOS/Android) who expect a native-feeling bottom navigation, live notifications, and localized UI text.
+- Desktop users (Windows, macOS, Linux) who access the platform via web browsers with a sidebar navigation layout optimized for larger screens.
 
 3. Core Functional Requirements
 Authentication & Access Control
@@ -35,11 +36,12 @@ Notifications & Real-Time Signals
 - `/notifications` fetches from `/notifications/` and can mark items read or show unread totals.
 
 Navigation & Layout
-- `UnderBar.jsx` implements the fixed mobile nav bar with icons (home, chat, profile, settings), unread badges, and language-aware labels.
-- Large screens suppress the UnderBar and show more immersive gradients, but desktop access to the core experience is blocked at the router level to keep QA scope on mobile.
+- `UnderBar.jsx` implements the fixed mobile nav bar (visible on screens ≤768px) with icons (home, chat, profile, settings), unread badges, and language-aware labels.
+- `SideBar.jsx` provides a fixed left-side navigation panel (visible on screens ≥769px) with the same navigation options, user profile information, and unread message counts. The sidebar is 250px wide and includes the UniLingo logo, navigation menu, and user info footer.
+- All pages are responsive: mobile devices use bottom navigation while desktop browsers use the sidebar layout. Main content areas automatically adjust padding to accommodate the sidebar on larger screens.
 
 Safety & Compliance
-- `PCNotSupported.jsx` informs desktop visitors about the mobile-only policy.
+- `PCNotSupported.jsx` remains available as a legacy component but is no longer actively used since desktop support has been implemented.
 - Report flows and moderation endpoints (e.g., `/admin/reports/`) ensure abuse handling.
 
 4. Data Models and API Contracts
@@ -68,13 +70,14 @@ Safety & Compliance
 - Testing currently relies on CRA defaults; future work can adopt Vitest or Testing Library, but jest configs already exist via CRA.
 
 8. Operational Considerations and Edge Cases
-- Mobile Guard: `MobileOnlyGuard` inspects user agents; any non-mobile path (other than `/pc-not-supported`) triggers a redirect, ensuring UI QA stays within phones/tablets.
+- Responsive Design: The application uses media queries to switch between mobile (UnderBar) and desktop (SideBar) navigation layouts at the 768px breakpoint. All pages include responsive padding adjustments to accommodate the sidebar on desktop.
 - Error Handling: Auth context resets corrupted local storage entries. Language loader falls back to Korean when translation JSON import fails.
 - Security: Tokens persist client-side; API must enforce HTTPS and short-lived JWTs. Logout scrubs sensitive keys plus matching caches.
-- Performance: Animated gradients and shadows are throttled; UnderBar updates unread counts via intervals to avoid re-render storms.
-- Deployment: CRA build artifacts are packaged into Capacitor projects for native stores while also deployable as a static bundle (Vercel script already mapped to `react-scripts build`).
+- Performance: Animated gradients and shadows are throttled; UnderBar and SideBar update unread counts via intervals to avoid re-render storms.
+- Deployment: CRA build artifacts are packaged into Capacitor projects for native stores while also deployable as a static bundle (Vercel script already mapped to `react-scripts build`). The responsive design ensures the same codebase works seamlessly across mobile and desktop browsers.
 
 9. Success Metrics and Next Steps
 - Track daily active matches, chat session length, report-to-resolution time, and localized UI adoption (based on `language` setting).
+- Monitor device type distribution (mobile vs desktop) and user engagement patterns across platforms.
 - Improve analytics around `window.globalHasNewNotification` to measure notification interactions.
-- Extend push/vibration toggles to real device APIs, add desktop web parity, and introduce automated tests for `useWebSocket` lifecycle, matching filters, and profile validation.
+- Extend push/vibration toggles to real device APIs and introduce automated tests for `useWebSocket` lifecycle, matching filters, and profile validation.
